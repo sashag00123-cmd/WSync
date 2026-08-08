@@ -1100,6 +1100,32 @@ details.det pre {
   font-weight: 600;
 }
 
+/* Раскрывающийся блок с ключами: по умолчанию свёрнут, поэтому оформлен
+   как элемент управления, а не как случайная ссылка. */
+details.det.keys > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+details.det.keys > summary:hover {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+.version {
+  color: var(--text-mute);
+  font-size: 12px;
+  text-align: center;
+  padding: 2px 0 4px;
+}
+
 .save-bar {
   position: sticky;
   bottom: 0;

@@ -4,6 +4,7 @@ import type {
   AppConfig,
   AppErrorInfo,
   AuthState,
+  BuildInfo,
   CloudLock,
   LogEntry,
   OperationResult,
@@ -46,6 +47,10 @@ function errorInfo(err: unknown): AppErrorInfo {
 
 export function App(): React.JSX.Element {
   const [config, setConfig] = useState<AppConfig | null>(null)
+  const [buildInfo, setBuildInfo] = useState<BuildInfo>({
+    version: '',
+    hasBuildCredentials: false
+  })
   const [authState, setAuthState] = useState<AuthState>({ authorized: false, needsClientId: true })
   const [quota, setQuota] = useState<Quota | null>(null)
   const [instanceId, setInstanceId] = useState<string>('')
@@ -130,6 +135,7 @@ export function App(): React.JSX.Element {
     void (async () => {
       const loaded = await reloadConfig()
       try {
+        setBuildInfo(await window.wsync.buildInfo())
         setAuthState(await window.wsync.authState())
       } catch (err) {
         showError(errorInfo(err))
@@ -475,6 +481,7 @@ export function App(): React.JSX.Element {
         {view === 'settings' && config !== null ? (
           <SettingsView
             config={config}
+            buildInfo={buildInfo}
             authState={authState}
             quota={quota}
             onSave={saveSettings}

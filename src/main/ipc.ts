@@ -1,4 +1,4 @@
-import { BrowserWindow, dialog, ipcMain, shell } from 'electron'
+import { BrowserWindow, app, dialog, ipcMain, shell } from 'electron'
 import { randomUUID } from 'node:crypto'
 import path from 'node:path'
 
@@ -6,6 +6,7 @@ import { IPC, type Envelope, type OpRequest, type WSyncApi } from '@shared/ipc'
 import type {
   AppConfig,
   AuthState,
+  BuildInfo,
   CloudLock,
   CloudManifest,
   DetectedInstance,
@@ -20,6 +21,7 @@ import type {
 import { YandexAuth } from './cloud/yandex/auth'
 import { YandexDisk } from './cloud/yandex/client'
 import type { CloudProvider } from './cloud/types'
+import { HAS_BUILD_CREDENTIALS } from './config/build-defaults'
 import { defaultBackupsPath, detectInstances } from './config/detect'
 import {
   getInstance,
@@ -205,6 +207,11 @@ async function startOperation(
 }
 
 export function registerIpc(): void {
+  handle<BuildInfo>(IPC.buildInfo, async () => ({
+    version: app.getVersion(),
+    hasBuildCredentials: HAS_BUILD_CREDENTIALS
+  }))
+
   handle<AppConfig>(IPC.configGet, async () => await loadConfig())
   handle<AppConfig>(IPC.configPatch, async (patch: Partial<AppConfig>) => await patchConfig(patch))
   handle<AppConfig>(IPC.instanceUpsert, async (instance: InstanceConfig) => await upsertInstance(instance))

@@ -31,6 +31,7 @@ function subscribe<T>(channel: string, cb: (payload: T) => void): () => void {
 }
 
 const api: WSyncApi = {
+  buildInfo: () => invoke(IPC.buildInfo),
   getConfig: () => invoke(IPC.configGet),
   patchConfig: (patch) => invoke(IPC.configPatch, patch),
   upsertInstance: (instance) => invoke(IPC.instanceUpsert, instance),

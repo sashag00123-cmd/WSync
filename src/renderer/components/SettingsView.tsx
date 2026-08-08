@@ -5,6 +5,7 @@ import {
   normalizeScope,
   type AppConfig,
   type AuthState,
+  type BuildInfo,
   type DetectedInstance,
   type InstanceConfig,
   type Quota,
@@ -16,6 +17,7 @@ import { Icon } from './Icon'
 
 export interface SettingsViewProps {
   config: AppConfig
+  buildInfo: BuildInfo
   authState: AuthState
   quota: Quota | null
   onSave: (next: AppConfig) => Promise<void>
@@ -130,6 +132,35 @@ export function SettingsView(props: SettingsViewProps): React.JSX.Element {
   const usedRatio =
     props.quota === null || props.quota.total === 0 ? 0 : props.quota.used / props.quota.total
 
+  const credentialFields = (
+    <>
+      <div className="label">client_id приложения</div>
+      <input
+        className="mono"
+        value={draft.cloud.clientId}
+        placeholder="1a2b3c4d5e6f7890abcdef1234567890"
+        onChange={(event) => patchCloud({ clientId: event.target.value })}
+      />
+
+      <div className="label">client_secret</div>
+      <input
+        type="password"
+        className="mono"
+        value={draft.cloud.clientSecret}
+        placeholder="необязательно"
+        onChange={(event) => patchCloud({ clientSecret: event.target.value })}
+      />
+
+      <div className="label">Запрашиваемые права</div>
+      <input
+        className="mono"
+        value={draft.cloud.scope}
+        placeholder={DEFAULT_YANDEX_SCOPE}
+        onChange={(event) => patchCloud({ scope: event.target.value })}
+      />
+    </>
+  )
+
   return (
     <div className="page">
       {/* ── Облако ─────────────────────────────────────────────────────── */}
@@ -151,32 +182,22 @@ export function SettingsView(props: SettingsViewProps): React.JSX.Element {
         </div>
 
         <div className="card-body">
-          <div className="fields">
-            <div className="label">client_id приложения</div>
-            <input
-              className="mono"
-              value={draft.cloud.clientId}
-              placeholder="1a2b3c4d5e6f7890abcdef1234567890"
-              onChange={(event) => patchCloud({ clientId: event.target.value })}
-            />
-
-            <div className="label">client_secret</div>
-            <input
-              type="password"
-              className="mono"
-              value={draft.cloud.clientSecret}
-              placeholder="необязательно"
-              onChange={(event) => patchCloud({ clientSecret: event.target.value })}
-            />
-
-            <div className="label">Запрашиваемые права</div>
-            <input
-              className="mono"
-              value={draft.cloud.scope}
-              placeholder={DEFAULT_YANDEX_SCOPE}
-              onChange={(event) => patchCloud({ scope: event.target.value })}
-            />
-          </div>
+          {/*
+            Когда ключи вшиты в сборку, поля прячутся: пользователю в них нечего
+            делать. Совсем убирать нельзя — они нужны при запуске из исходников
+            без переменных окружения, при диагностике прав (мы так лечили
+            invalid_scope) и если вшитый ключ придётся перевыпустить.
+          */}
+          {props.buildInfo.hasBuildCredentials ? (
+            <details className="det keys">
+              <summary>Ключи приложения — вшиты в сборку</summary>
+              <div className="fields" style={{ marginTop: 14 }}>
+                {credentialFields}
+              </div>
+            </details>
+          ) : (
+            <div className="fields">{credentialFields}</div>
+          )}
 
           {scopeChanged && (
             <p className="hint warn">
@@ -450,6 +471,8 @@ export function SettingsView(props: SettingsViewProps): React.JSX.Element {
           </div>
         </div>
       </section>
+
+      <div className="version">WSync {props.buildInfo.version}</div>
 
       {dirty && (
         <div className="save-bar">

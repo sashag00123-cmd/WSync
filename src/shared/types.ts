@@ -264,6 +264,16 @@ export interface Quota {
   used: number
 }
 
+/** Сведения о самой сборке — влияют на то, что показывать в настройках. */
+export interface BuildInfo {
+  version: string
+  /**
+   * Ключи приложения Яндекс.OAuth вшиты при сборке. Тогда поля для их ввода
+   * в настройках — лишний шум: пользователю нечего в них делать.
+   */
+  hasBuildCredentials: boolean
+}
+
 /** Результат проверки: даёт ли параллельная выгрузка выигрыш на этом канале. */
 export interface SpeedTestResult {
   payloadBytes: number

@@ -2,6 +2,7 @@ import type {
   AppConfig,
   AppErrorInfo,
   AuthState,
+  BuildInfo,
   ConfirmToken,
   DetectedInstance,
   InstanceConfig,
@@ -15,6 +16,7 @@ import type {
 } from './types'
 
 export const IPC = {
+  buildInfo: 'app:buildInfo',
   configGet: 'config:get',
   configPatch: 'config:patch',
   instanceUpsert: 'instance:upsert',
@@ -59,6 +61,7 @@ export interface OpRequest {
 
 /** Поверхность, которую preload выставляет в renderer. */
 export interface WSyncApi {
+  buildInfo(): Promise<BuildInfo>
   getConfig(): Promise<AppConfig>
   patchConfig(patch: Partial<AppConfig>): Promise<AppConfig>
   upsertInstance(instance: InstanceConfig): Promise<AppConfig>
