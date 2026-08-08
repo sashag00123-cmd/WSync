@@ -10,7 +10,8 @@ import {
   type InstanceConfig,
   type Quota,
   type SpeedTestResult,
-  type ThemeMode
+  type ThemeMode,
+  type UpdateStatus
 } from '@shared/types'
 
 import { formatBytes } from '../lib/format'
@@ -27,6 +28,63 @@ export interface SettingsViewProps {
   onDisconnect: () => Promise<void>
   onRefreshQuota: () => Promise<void>
   onSpeedTest: () => Promise<SpeedTestResult>
+  updateStatus: UpdateStatus
+  onCheckUpdate: () => Promise<void>
+  onInstallUpdate: () => Promise<void>
+  onRestartUpdate: () => Promise<void>
+}
+
+/** Текст состояния обновления — вся ветвистость собрана в одном месте. */
+export function updateText(status: UpdateStatus, currentVersion: string): string {
+  switch (status.state) {
+    case 'checking':
+      return 'проверяю…'
+    case 'available':
+      return `доступна ${status.latestVersion}`
+    case 'downloading':
+      return `скачиваю ${status.percent ?? 0}%`
+    case 'ready':
+      return `${status.latestVersion} скачана, нужен перезапуск`
+    case 'none':
+      return `установлена последняя версия (${currentVersion})`
+    case 'error':
+      return `не удалось проверить: ${status.error ?? 'неизвестная ошибка'}`
+    case 'idle':
+    default:
+      return ''
+  }
+}
+
+/** Кнопка действия зависит и от состояния, и от того, умеет ли платформа ставить сама. */
+export function UpdateAction(props: {
+  status: UpdateStatus
+  onInstall: () => Promise<void>
+  onRestart: () => Promise<void>
+}): React.JSX.Element | null {
+  const { status } = props
+  if (status.state === 'ready') {
+    return (
+      <button className="primary" onClick={() => void props.onRestart()}>
+        <Icon name="refresh" size={16} />
+        Перезапустить и обновить
+      </button>
+    )
+  }
+  if (status.state === 'downloading') {
+    return (
+      <button disabled>
+        <Icon name="spinner" size={16} />
+        Скачиваю {status.percent ?? 0}%
+      </button>
+    )
+  }
+  if (status.state !== 'available') return null
+  return (
+    <button className="primary" onClick={() => void props.onInstall()}>
+      <Icon name={status.canInstall ? 'download' : 'external'} size={16} />
+      {status.canInstall ? `Обновить до ${status.latestVersion}` : 'Открыть страницу релиза'}
+    </button>
+  )
 }
 
 function slug(value: string): string {
@@ -432,6 +490,24 @@ export function SettingsView(props: SettingsViewProps): React.JSX.Element {
         </div>
         <div className="card-body">
           <div className="fields">
+            <div className="label">Обновления</div>
+            <div className="row wrap">
+              <button
+                disabled={props.updateStatus.state === 'checking'}
+                onClick={() => void props.onCheckUpdate()}
+              >
+                <Icon
+                  name={props.updateStatus.state === 'checking' ? 'spinner' : 'refresh'}
+                  size={16}
+                />
+                {props.updateStatus.state === 'checking' ? 'Проверяю' : 'Проверить обновления'}
+              </button>
+              <UpdateAction status={props.updateStatus} onInstall={props.onInstallUpdate} onRestart={props.onRestartUpdate} />
+              <span style={{ fontSize: 12.5, color: 'var(--text-mute)' }}>
+                {updateText(props.updateStatus, props.buildInfo.version)}
+              </span>
+            </div>
+
             <div className="label">Оформление</div>
             <div className="segmented" role="group">
               {(

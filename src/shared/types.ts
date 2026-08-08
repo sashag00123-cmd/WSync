@@ -268,6 +268,29 @@ export interface Quota {
   used: number
 }
 
+export type UpdateState =
+  | 'idle'
+  | 'checking'
+  | 'available'
+  | 'downloading'
+  | 'ready'
+  | 'none'
+  | 'error'
+
+export interface UpdateStatus {
+  state: UpdateState
+  latestVersion?: string
+  notes?: string
+  percent?: number
+  error?: string
+  /**
+   * Приложение может поставить обновление само. На macOS без подписи —
+   * не может: Squirrel.Mac отклоняет неподписанные обновления.
+   */
+  canInstall: boolean
+  releaseUrl: string
+}
+
 /** Сведения о самой сборке — влияют на то, что показывать в настройках. */
 export interface BuildInfo {
   version: string

@@ -11,6 +11,7 @@ import type {
   ProgressEvent,
   Quota,
   SpeedTestResult,
+  UpdateStatus,
   WorldRow
 } from '@shared/types'
 
@@ -19,7 +20,7 @@ import { ConfirmDialog } from './components/ConfirmDialog'
 import { BrandMark, Icon } from './components/Icon'
 import { LogPanel } from './components/LogPanel'
 import { ProgressDock } from './components/ProgressDock'
-import { SettingsView } from './components/SettingsView'
+import { SettingsView, UpdateAction } from './components/SettingsView'
 import { Toasts, type Toast } from './components/Toasts'
 import { WorldList } from './components/WorldList'
 import { formatDate, statusView } from './lib/format'
@@ -67,6 +68,12 @@ export function App(): React.JSX.Element {
   const [lock, setLock] = useState<CloudLock | null>(null)
   const [confirmRequest, setConfirmRequest] = useState<ConfirmRequest | null>(null)
 
+  const [updateStatus, setUpdateStatus] = useState<UpdateStatus>({
+    state: 'idle',
+    canInstall: false,
+    releaseUrl: ''
+  })
+
   const sizeRunId = useRef(0)
   const toastId = useRef(0)
 
@@ -110,12 +117,23 @@ export function App(): React.JSX.Element {
       setActiveOpId(event.opId)
     })
     const offAuth = window.wsync.onAuthChange(setAuthState)
+    const offUpdate = window.wsync.onUpdate(setUpdateStatus)
     return () => {
       offLog()
       offProgress()
       offAuth()
+      offUpdate()
     }
   }, [pushLog])
+
+  // Проверяем обновления один раз при старте, с задержкой: сеть на запуске
+  // и без того занята чтением манифеста и списка миров.
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void window.wsync.checkUpdate().catch(() => undefined)
+    }, 4000)
+    return () => window.clearTimeout(timer)
+  }, [])
 
   const reloadConfig = useCallback(async (): Promise<AppConfig | null> => {
     try {
@@ -413,6 +431,20 @@ export function App(): React.JSX.Element {
     return await window.wsync.speedTest()
   }, [])
 
+  const checkUpdate = useCallback(async (): Promise<void> => {
+    setUpdateStatus(await window.wsync.checkUpdate())
+  }, [])
+
+  const installUpdate = useCallback(async (): Promise<void> => {
+    // false означает «платформа не умеет ставить сама» — main уже открыл
+    // страницу релиза, дополнительных действий не нужно.
+    await window.wsync.installUpdate()
+  }, [])
+
+  const restartToUpdate = useCallback(async (): Promise<void> => {
+    await window.wsync.restartToUpdate()
+  }, [])
+
   const instances = config?.instances ?? []
   const busy = activeOpId !== null
   const currentInstance = instances.find((item) => item.id === instanceId)
@@ -487,9 +519,40 @@ export function App(): React.JSX.Element {
             onDisconnect={disconnect}
             onRefreshQuota={refreshQuota}
             onSpeedTest={speedTest}
+            updateStatus={updateStatus}
+            onCheckUpdate={checkUpdate}
+            onInstallUpdate={installUpdate}
+            onRestartUpdate={restartToUpdate}
           />
         ) : (
           <div className="page">
+            {(updateStatus.state === 'available' ||
+              updateStatus.state === 'downloading' ||
+              updateStatus.state === 'ready') && (
+              <div className="notice info">
+                <Icon name="download" size={19} />
+                <div className="grow">
+                  <b>
+                    {updateStatus.state === 'ready'
+                      ? `Версия ${updateStatus.latestVersion} готова к установке`
+                      : `Доступна версия ${updateStatus.latestVersion}`}
+                  </b>
+                  <div className="sub">
+                    {updateStatus.state === 'downloading'
+                      ? `Скачивание: ${updateStatus.percent ?? 0}%`
+                      : updateStatus.canInstall
+                        ? 'Установится при перезапуске приложения'
+                        : 'Скачайте установщик со страницы релиза'}
+                  </div>
+                </div>
+                <UpdateAction
+                  status={updateStatus}
+                  onInstall={installUpdate}
+                  onRestart={restartToUpdate}
+                />
+              </div>
+            )}
+
             {!authState.authorized && (
               <div className="notice warn">
                 <Icon name="cloudOff" size={19} />

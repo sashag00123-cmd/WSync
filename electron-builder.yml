@@ -1,5 +1,13 @@
 appId: com.wsync.app
 productName: WSync
+
+# Нужен, чтобы electron-builder сгенерировал latest.yml — по нему приложение
+# узнаёт о новой версии. Сама выкладка отключена флагом --publish never:
+# релиз создаёт отдельное задание workflow.
+publish:
+  provider: github
+  owner: sashag00123-cmd
+  repo: WSync
 directories:
   output: release
   buildResources: build

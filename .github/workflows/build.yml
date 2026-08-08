@@ -33,10 +33,15 @@ jobs:
           WSYNC_YANDEX_CLIENT_SECRET: ${{ secrets.YANDEX_CLIENT_SECRET }}
           WSYNC_YANDEX_SCOPE: ${{ secrets.YANDEX_SCOPE }}
 
+      # latest.yml и blockmap нужны electron-updater: по первому приложение
+      # узнаёт о новой версии, второй позволяет качать только изменившиеся блоки.
       - uses: actions/upload-artifact@v4
         with:
           name: WSync-windows
-          path: release/*.exe
+          path: |
+            release/*.exe
+            release/*.exe.blockmap
+            release/latest.yml
           if-no-files-found: error
 
   macos:
@@ -69,7 +74,10 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: WSync-macos
-          path: release/*.dmg
+          path: |
+            release/*.dmg
+            release/*.dmg.blockmap
+            release/latest-mac.yml
           if-no-files-found: error
 
   # Артефакты задания живут 90 дней и требуют входа в GitHub. Для тега делаем

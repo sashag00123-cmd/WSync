@@ -16,6 +16,7 @@ import type {
   ProgressEvent,
   Quota,
   SpeedTestResult,
+  UpdateStatus,
   WorldRow
 } from '@shared/types'
 import { YandexAuth } from './cloud/yandex/auth'
@@ -39,6 +40,13 @@ import { runCloudSpeedTest } from './core/speedtest'
 import { computeStatus } from './core/status'
 import { localWorldSize, scanLocalWorlds } from './core/worlds'
 import { runUpload } from './core/upload'
+import {
+  checkForUpdate,
+  downloadAndInstall,
+  getUpdateStatus,
+  initUpdater,
+  quitAndInstall
+} from './updater'
 
 function broadcast(channel: string, payload: unknown): void {
   for (const window of BrowserWindow.getAllWindows()) {
@@ -207,6 +215,12 @@ async function startOperation(
 }
 
 export function registerIpc(): void {
+  initUpdater((next) => broadcast(IPC.evUpdate, next))
+  handle<UpdateStatus>(IPC.updateStatus, async () => getUpdateStatus())
+  handle<UpdateStatus>(IPC.updateCheck, async () => await checkForUpdate())
+  handle<boolean>(IPC.updateInstall, async () => await downloadAndInstall())
+  handle<void>(IPC.updateRestart, async () => await quitAndInstall())
+
   handle<BuildInfo>(IPC.buildInfo, async () => ({
     version: app.getVersion(),
     hasBuildCredentials: HAS_BUILD_CREDENTIALS

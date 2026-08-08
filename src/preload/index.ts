@@ -1,7 +1,13 @@
 import { contextBridge, ipcRenderer } from 'electron'
 
 import { IPC, type Envelope, type WSyncApi } from '@shared/ipc'
-import type { AppErrorInfo, AuthState, LogEntry, ProgressEvent } from '@shared/types'
+import type {
+  AppErrorInfo,
+  AuthState,
+  LogEntry,
+  ProgressEvent,
+  UpdateStatus
+} from '@shared/types'
 
 /** Ошибка с кодом, восстановленная из конверта main-процесса. */
 export class IpcError extends Error {
@@ -57,7 +63,13 @@ const api: WSyncApi = {
   openPath: (target) => invoke(IPC.openPath, target),
   openExternal: (url) => invoke(IPC.openExternal, url),
 
+  updateStatus: () => invoke(IPC.updateStatus),
+  checkUpdate: () => invoke(IPC.updateCheck),
+  installUpdate: () => invoke(IPC.updateInstall),
+  restartToUpdate: () => invoke(IPC.updateRestart),
+
   onProgress: (cb) => subscribe<ProgressEvent>(IPC.evProgress, cb),
+  onUpdate: (cb) => subscribe<UpdateStatus>(IPC.evUpdate, cb),
   onLog: (cb) => subscribe<LogEntry>(IPC.evLog, cb),
   onAuthChange: (cb) => subscribe<AuthState>(IPC.evAuth, cb)
 }

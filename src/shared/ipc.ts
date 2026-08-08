@@ -11,6 +11,7 @@ import type {
   ProgressEvent,
   Quota,
   SpeedTestResult,
+  UpdateStatus,
   WorldRow,
   CloudLock
 } from './types'
@@ -42,7 +43,13 @@ export const IPC = {
   openPath: 'shell:openPath',
   openExternal: 'shell:openExternal',
 
+  updateCheck: 'update:check',
+  updateStatus: 'update:status',
+  updateInstall: 'update:install',
+  updateRestart: 'update:restart',
+
   evProgress: 'ev:progress',
+  evUpdate: 'ev:update',
   evLog: 'ev:log',
   evAuth: 'ev:auth'
 } as const
@@ -89,7 +96,14 @@ export interface WSyncApi {
   openPath(target: string): Promise<void>
   openExternal(url: string): Promise<void>
 
+  updateStatus(): Promise<UpdateStatus>
+  checkUpdate(): Promise<UpdateStatus>
+  /** Начинает скачивание; если платформа не умеет — открывает страницу релиза. */
+  installUpdate(): Promise<boolean>
+  restartToUpdate(): Promise<void>
+
   onProgress(cb: (e: ProgressEvent) => void): () => void
+  onUpdate(cb: (e: UpdateStatus) => void): () => void
   onLog(cb: (e: LogEntry) => void): () => void
   onAuthChange(cb: (e: AuthState) => void): () => void
 }

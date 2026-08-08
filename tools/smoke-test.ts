@@ -9,6 +9,7 @@ import path from 'node:path'
 import zlib from 'node:zlib'
 
 import { MAX_PART_BYTES, partFileName, planParts } from '../src/shared/types'
+import { compareVersions, isNewerVersion } from '../src/shared/version'
 import { uploadFileStream } from '../src/main/cloud/http'
 import { mapWithConcurrency } from '../src/main/core/parallel'
 
@@ -426,6 +427,25 @@ async function main(): Promise<void> {
     /часть не выгрузилась/
   )
   ok('ошибка одной задачи прекращает работу пула')
+
+  console.log('\nСравнение версий для обновлений')
+  // Лексикографическое сравнение здесь даёт '0.10.0' < '0.9.0' — именно на этом
+  // ломаются самодельные проверки обновлений, поэтому случай проверяем прямо.
+  assert.equal(compareVersions('0.10.0', '0.9.0'), 1, '0.10.0 новее 0.9.0')
+  assert.equal(compareVersions('0.9.0', '0.10.0'), -1)
+  assert.equal(compareVersions('1.0.0', '0.999.999'), 1)
+  assert.equal(compareVersions('0.1.0', '0.1.0'), 0)
+  assert.equal(compareVersions('v0.2.0', '0.1.9'), 1, 'префикс v не должен мешать')
+  assert.equal(compareVersions('0.2', '0.2.0'), 0, 'недостающие части считаются нулями')
+  assert.equal(compareVersions('0.2.1', '0.2'), 1)
+  assert.equal(compareVersions('0.3.0-beta.1', '0.3.0'), 0, 'предвыпуски не различаем')
+  assert.equal(compareVersions('мусор', '0.0.0'), 0, 'нечисловое не должно падать')
+  ok('сравнение версий устойчиво к префиксам, разной длине и мусору')
+
+  assert.equal(isNewerVersion('0.2.0', '0.1.9'), true)
+  assert.equal(isNewerVersion('0.1.0', '0.1.0'), false, 'та же версия — не обновление')
+  assert.equal(isNewerVersion('0.0.9', '0.1.0'), false, 'откат не считается обновлением')
+  ok('обновлением считается только строго более новая версия')
 
   console.log('\nОтмена операции')
   const controller = new AbortController()
