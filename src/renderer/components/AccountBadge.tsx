@@ -24,8 +24,8 @@ export function AccountBadge(props: AccountBadgeProps): React.JSX.Element {
   if (!authState.authorized) {
     return (
       <span className="account off" title="Яндекс.Диск не подключён">
-        <Icon name="cloudOff" size={16} />
-        {authState.needsClientId ? 'нужен client_id' : 'не подключено'}
+        <i className={`state-dot ${authState.needsClientId ? 'warn' : 'danger'}`} />
+        <b>{authState.needsClientId ? 'No client_id' : 'Disconnected'}</b>
       </span>
     )
   }
@@ -34,19 +34,26 @@ export function AccountBadge(props: AccountBadgeProps): React.JSX.Element {
   const free = quota === null ? null : quota.total - quota.used
   const tight = usedRatio !== null && usedRatio > 0.9
 
+  // Логина здесь нет намеренно: он показан в настройках, дублировать незачем.
+  const title =
+    quota === null
+      ? 'Сведения о диске недоступны'
+      : `Занято ${formatBytes(quota.used)} из ${formatBytes(quota.total)}`
+
   return (
-    <span
-      className="account"
-      title={
-        quota === null
-          ? 'Сведения о диске недоступны'
-          : `Занято ${formatBytes(quota.used)} из ${formatBytes(quota.total)}`
-      }
-    >
-      {usedRatio === null ? <Icon name="cloud" size={16} /> : <QuotaRing ratio={usedRatio} tight={tight} />}
-      <b>{authState.login ?? 'Яндекс.Диск'}</b>
-      {free !== null && (
-        <span className={`free num${tight ? ' tight' : ''}`}>{formatBytes(free)}</span>
+    <span className="account" title={title}>
+      <i className="state-dot ok" />
+      <b>Connected</b>
+      {free !== null && usedRatio !== null && (
+        <span className="quota-part">
+          <QuotaRing ratio={usedRatio} tight={tight} />
+          <span className={`free num${tight ? ' tight' : ''}`}>{formatBytes(free)}</span>
+        </span>
+      )}
+      {quota === null && (
+        <span className="quota-part">
+          <Icon name="cloud" size={15} />
+        </span>
       )}
     </span>
   )

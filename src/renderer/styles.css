@@ -344,17 +344,45 @@ select {
   white-space: nowrap;
 }
 
-.account .free::before {
-  content: '·';
-  margin-right: 7px;
-}
-
 .account .free.tight {
   color: var(--warn);
 }
 
+/* Разделителя-точки нет намеренно: между состоянием и квотой достаточно
+   воздуха, а лишний символ в шапке только шумит. */
+.account .quota-part {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: 12px;
+}
+
 .account.off {
   color: var(--text-mute);
+}
+
+/* Точка состояния подключения: цвет несёт смысл, форма одинаковая. */
+.state-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--text-mute);
+}
+
+.state-dot.ok {
+  background: var(--ok);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 18%, transparent);
+}
+
+.state-dot.warn {
+  background: var(--warn);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--warn) 18%, transparent);
+}
+
+.state-dot.danger {
+  background: var(--danger);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 18%, transparent);
 }
 
 .ring-quota {
