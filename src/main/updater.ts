@@ -1,8 +1,10 @@
 import { app, shell } from 'electron'
+import type { AppUpdater } from 'electron-updater'
 
 import type { UpdateStatus } from '@shared/types'
 import { isNewerVersion } from '@shared/version'
 import { httpJson } from './cloud/http'
+import { AppError } from './core/errors'
 
 /**
  * Обновления через GitHub Releases.
@@ -42,6 +44,33 @@ let status: UpdateStatus = {
 
 let notify: (next: UpdateStatus) => void = () => undefined
 let updaterWired = false
+
+/** Только те члены, которыми пользуемся; quitAndInstall объявлен в BaseUpdater. */
+type Updater = AppUpdater & {
+  quitAndInstall(isSilent?: boolean, isForceRunAfter?: boolean): void
+}
+
+/**
+ * electron-updater объявляет autoUpdater геттером на module.exports, а такие
+ * экспорты статический анализатор Node не распознаёт: при import() они не
+ * попадают в именованные и доступны только через default. Проверено —
+ * mod.autoUpdater равен undefined, отсюда и была ошибка
+ * «Cannot set properties of undefined (setting 'autoDownload')».
+ */
+async function loadUpdater(): Promise<Updater> {
+  const mod = (await import('electron-updater')) as unknown as {
+    autoUpdater?: Updater
+    default?: { autoUpdater?: Updater }
+  }
+  const updater = mod.default?.autoUpdater ?? mod.autoUpdater
+  if (updater === undefined) {
+    throw new AppError(
+      'UPDATER_UNAVAILABLE',
+      'Модуль обновления недоступен в этой сборке — обновитесь со страницы релиза'
+    )
+  }
+  return updater
+}
 
 export function initUpdater(onChange: (next: UpdateStatus) => void): void {
   notify = onChange
@@ -110,9 +139,9 @@ export async function downloadAndInstall(): Promise<boolean> {
     return false
   }
 
-  // Импорт по требованию: в режиме разработки electron-updater ругается на
-  // отсутствие app-update.yml уже при обращении к autoUpdater.
-  const { autoUpdater } = await import('electron-updater')
+  // Импорт по требованию: обращение к autoUpdater создаёт объект обновления,
+  // которому нужен app-update.yml, а в режиме разработки его нет.
+  const autoUpdater = await loadUpdater()
 
   if (!updaterWired) {
     updaterWired = true
@@ -144,7 +173,7 @@ export async function downloadAndInstall(): Promise<boolean> {
 /** Перезапуск с установкой скачанного обновления. */
 export async function quitAndInstall(): Promise<void> {
   if (status.state !== 'ready') return
-  const { autoUpdater } = await import('electron-updater')
+  const autoUpdater = await loadUpdater()
   // isSilent=false, чтобы пользователь видел установщик; isForceRunAfter=true —
   // приложение поднимется само.
   autoUpdater.quitAndInstall(false, true)
