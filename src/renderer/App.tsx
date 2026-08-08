@@ -23,7 +23,7 @@ import { ProgressDock } from './components/ProgressDock'
 import { SettingsView, UpdateAction } from './components/SettingsView'
 import { Toasts, type Toast } from './components/Toasts'
 import { WorldList } from './components/WorldList'
-import { formatDate, statusView } from './lib/format'
+import { formatDate, shortenPath, statusView } from './lib/format'
 
 const MAX_LOG_ENTRIES = 400
 
@@ -431,9 +431,29 @@ export function App(): React.JSX.Element {
     return await window.wsync.speedTest()
   }, [])
 
+  /**
+   * Проверка по кнопке отвечает тостом: зелёным, если версия последняя, и
+   * оранжевым, если есть новая. Автоматическая проверка при старте тостов не
+   * показывает — иначе они всплывали бы при каждом запуске.
+   */
   const checkUpdate = useCallback(async (): Promise<void> => {
-    setUpdateStatus(await window.wsync.checkUpdate())
-  }, [])
+    const status = await window.wsync.checkUpdate()
+    setUpdateStatus(status)
+    if (status.state === 'none') {
+      showToast(
+        { level: 'ok', title: `Установлена последняя версия (${buildInfo.version})` },
+        6000
+      )
+    } else if (status.state === 'available') {
+      showToast({ level: 'warn', title: `Доступна версия ${status.latestVersion}` }, 10_000)
+    } else if (status.state === 'error') {
+      showToast({
+        level: 'error',
+        title: 'Не удалось проверить обновления',
+        ...(status.error !== undefined ? { details: status.error } : {})
+      })
+    }
+  }, [buildInfo.version, showToast])
 
   const installUpdate = useCallback(async (): Promise<void> => {
     // false означает «платформа не умеет ставить сама» — main уже открыл
@@ -601,7 +621,7 @@ export function App(): React.JSX.Element {
                 <span className="grow" />
                 {currentInstance !== undefined && (
                   <span className="sub mono" title={currentInstance.savesPath}>
-                    {currentInstance.savesPath}
+                    {shortenPath(currentInstance.savesPath, 2)}
                   </span>
                 )}
               </div>

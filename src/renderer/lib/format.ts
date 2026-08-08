@@ -59,6 +59,20 @@ export function relativeDays(ms: number | null | undefined): string {
   return `${days} дн назад`
 }
 
+/**
+ * Укорачивает путь по границам сегментов, оставляя хвост.
+ *
+ * Раньше это делалось трюком с direction: rtl, и он резал посреди слова —
+ * «…orge\Instances\…» вместо «…\All the Mods 10\saves». Хвост важнее начала:
+ * по нему видно, о какой сборке речь, а полный путь остаётся в подсказке.
+ */
+export function shortenPath(value: string, segments = 2): string {
+  const separator = value.includes('\\') ? '\\' : '/'
+  const parts = value.split(/[\\/]/).filter((part) => part.length > 0)
+  if (parts.length <= segments) return value
+  return `…${separator}${parts.slice(-segments).join(separator)}`
+}
+
 export interface StatusView {
   label: string
   tone: 'ok' | 'info' | 'warn' | 'muted'

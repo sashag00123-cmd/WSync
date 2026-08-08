@@ -34,27 +34,6 @@ export interface SettingsViewProps {
   onRestartUpdate: () => Promise<void>
 }
 
-/** Текст состояния обновления — вся ветвистость собрана в одном месте. */
-export function updateText(status: UpdateStatus, currentVersion: string): string {
-  switch (status.state) {
-    case 'checking':
-      return 'проверяю…'
-    case 'available':
-      return `доступна ${status.latestVersion}`
-    case 'downloading':
-      return `скачиваю ${status.percent ?? 0}%`
-    case 'ready':
-      return `${status.latestVersion} скачана, нужен перезапуск`
-    case 'none':
-      return `установлена последняя версия (${currentVersion})`
-    case 'error':
-      return `не удалось проверить: ${status.error ?? 'неизвестная ошибка'}`
-    case 'idle':
-    default:
-      return ''
-  }
-}
-
 /** Кнопка действия зависит и от состояния, и от того, умеет ли платформа ставить сама. */
 export function UpdateAction(props: {
   status: UpdateStatus
@@ -502,10 +481,11 @@ export function SettingsView(props: SettingsViewProps): React.JSX.Element {
                 />
                 {props.updateStatus.state === 'checking' ? 'Проверяю' : 'Проверить обновления'}
               </button>
-              <UpdateAction status={props.updateStatus} onInstall={props.onInstallUpdate} onRestart={props.onRestartUpdate} />
-              <span style={{ fontSize: 12.5, color: 'var(--text-mute)' }}>
-                {updateText(props.updateStatus, props.buildInfo.version)}
-              </span>
+              <UpdateAction
+                status={props.updateStatus}
+                onInstall={props.onInstallUpdate}
+                onRestart={props.onRestartUpdate}
+              />
             </div>
 
             <div className="label">Оформление</div>

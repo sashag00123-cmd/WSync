@@ -461,8 +461,6 @@ select {
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 46ch;
-  direction: rtl;
-  text-align: left;
 }
 
 .card-head .hicon {
@@ -1085,12 +1083,12 @@ details.det pre {
   color: var(--text-mute);
 }
 
+/* В настройках путь показываем целиком: пользователь им проверяет, та ли это
+   сборка и тот ли диск. Длинный путь переносится, а не обрезается. */
 .path-box span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  direction: rtl;
-  text-align: left;
+  min-width: 0;
+  word-break: break-all;
+  line-height: 1.45;
 }
 
 .instance {
