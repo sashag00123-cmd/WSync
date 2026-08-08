@@ -1,0 +1,12 @@
+node_modules/
+out/
+release/
+dist/
+*.log
+.DS_Store
+.vite/
+
+# Локальная конфигурация агента и личные переменные окружения — не в репозиторий.
+.claude/
+.env
+.env.local

@@ -1,0 +1,73 @@
+name: build
+
+# Запуск вручную из вкладки Actions либо по тегу вида v0.1.0.
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Проверки
+        run: |
+          npm run typecheck
+          npm run smoke
+
+      - name: Сборка установщика
+        run: npm run dist:win
+        env:
+          # Ключи приложения Яндекс.OAuth вшиваются в сборку из секретов репозитория.
+          WSYNC_YANDEX_CLIENT_ID: ${{ secrets.YANDEX_CLIENT_ID }}
+          WSYNC_YANDEX_CLIENT_SECRET: ${{ secrets.YANDEX_CLIENT_SECRET }}
+          WSYNC_YANDEX_SCOPE: ${{ secrets.YANDEX_SCOPE }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: WSync-windows
+          path: release/*.exe
+          if-no-files-found: error
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Проверки
+        run: |
+          npm run typecheck
+          npm run smoke
+
+      - name: Сборка образов дисков
+        run: npm run dist:mac
+        env:
+          WSYNC_YANDEX_CLIENT_ID: ${{ secrets.YANDEX_CLIENT_ID }}
+          WSYNC_YANDEX_CLIENT_SECRET: ${{ secrets.YANDEX_CLIENT_SECRET }}
+          WSYNC_YANDEX_SCOPE: ${{ secrets.YANDEX_SCOPE }}
+          # Подписи нет, и electron-builder не должен её искать: без этого
+          # сборка падает на попытке найти сертификат в связке ключей.
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: WSync-macos
+          path: release/*.dmg
+          if-no-files-found: error

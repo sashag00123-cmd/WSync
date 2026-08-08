@@ -1,0 +1,29 @@
+appId: com.wsync.app
+productName: WSync
+directories:
+  output: release
+  buildResources: build
+files:
+  - out/**
+  - package.json
+asarUnpack:
+  - '**/*.node'
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  artifactName: WSync-${version}-win-${arch}.${ext}
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  perMachine: false
+mac:
+  target:
+    - target: dmg
+      arch: [arm64, x64]
+  category: public.app-category.utilities
+  artifactName: WSync-${version}-mac-${arch}.${ext}
+  # Подпись и нотаризация требуют Apple Developer Program.
+  # Без них сборка запускается, но macOS требует разрешения в
+  # System Settings → Privacy & Security при первом запуске.
+  identity: null

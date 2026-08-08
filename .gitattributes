@@ -1,0 +1,6 @@
+# В репозитории всегда LF: иначе Windows и macOS будут наперегонки
+# переписывать одни и те же файлы переводами строк.
+* text=auto eol=lf
+*.png binary
+*.ico binary
+*.icns binary
