@@ -1,6 +1,6 @@
 {
   "name": "wsync",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Minecraft world sync between machines via Yandex.Disk",
   "main": "out/main/index.js",
   "license": "MIT",
