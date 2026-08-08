@@ -86,11 +86,19 @@ jobs:
           path: dist
           merge-multiple: true
 
+      # Если релиз для тега уже есть — обновляем файлы, а не пытаемся создать
+      # его заново: create на существующем теге падает, и это ровно тот случай,
+      # когда тег передвинули и запустили сборку повторно.
       - name: Релиз с установщиками
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: >
-          gh release create "${{ github.ref_name }}" dist/*
-          --repo "${{ github.repository }}"
-          --title "WSync ${{ github.ref_name }}"
-          --generate-notes
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          if gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
+            echo "Релиз $TAG уже существует — заменяю файлы"
+            gh release upload "$TAG" dist/* --repo "$REPO" --clobber
+          else
+            gh release create "$TAG" dist/* --repo "$REPO" \
+              --title "WSync $TAG" --generate-notes
+          fi
