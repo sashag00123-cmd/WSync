@@ -1,4 +1,4 @@
-import { BrowserWindow, app, dialog, ipcMain, shell } from 'electron'
+import { BrowserWindow, app, dialog, ipcMain, nativeTheme, shell } from 'electron'
 import { randomUUID } from 'node:crypto'
 import path from 'node:path'
 
@@ -213,7 +213,13 @@ export function registerIpc(): void {
   }))
 
   handle<AppConfig>(IPC.configGet, async () => await loadConfig())
-  handle<AppConfig>(IPC.configPatch, async (patch: Partial<AppConfig>) => await patchConfig(patch))
+  handle<AppConfig>(IPC.configPatch, async (patch: Partial<AppConfig>) => {
+    const saved = await patchConfig(patch)
+    // Тему держит и системная часть окна: рамка, нативные диалоги, фон при
+    // создании окна. Без этого светлая тема соседствует с тёмной рамкой.
+    nativeTheme.themeSource = saved.theme
+    return saved
+  })
   handle<AppConfig>(IPC.instanceUpsert, async (instance: InstanceConfig) => await upsertInstance(instance))
   handle<AppConfig>(IPC.instanceRemove, async (id: string) => await removeInstance(id))
   handle<DetectedInstance[]>(IPC.detectInstances, async () => await detectInstances())

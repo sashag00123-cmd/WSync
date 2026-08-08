@@ -1,6 +1,7 @@
-import { BrowserWindow, app, shell } from 'electron'
+import { BrowserWindow, app, nativeTheme, shell } from 'electron'
 import path from 'node:path'
 
+import { loadConfig } from './config/store'
 import { registerIpc } from './ipc'
 
 function createWindow(): BrowserWindow {
@@ -10,7 +11,7 @@ function createWindow(): BrowserWindow {
     minWidth: 940,
     minHeight: 560,
     show: false,
-    backgroundColor: '#14161a',
+    backgroundColor: nativeTheme.shouldUseDarkColors ? '#0d1016' : '#f6f7fa',
     autoHideMenuBar: process.platform !== 'darwin',
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
@@ -51,7 +52,13 @@ if (!app.requestSingleInstanceLock()) {
     }
   })
 
-  void app.whenReady().then(() => {
+  void app.whenReady().then(async () => {
+    // Тему применяем до создания окна: иначе первый кадр мигнёт чужим фоном.
+    try {
+      nativeTheme.themeSource = (await loadConfig()).theme
+    } catch {
+      // Битый конфиг не должен мешать запуску — останется системная тема.
+    }
     registerIpc()
     createWindow()
 

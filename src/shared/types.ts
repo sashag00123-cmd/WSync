@@ -40,6 +40,9 @@ export function partFileName(index: number): string {
 
 export type CloudProviderId = 'yandex'
 
+/** 'system' — следовать настройке операционной системы. */
+export type ThemeMode = 'system' | 'dark' | 'light'
+
 /**
  * Права по умолчанию: работа в папке приложения плюс сведения о диске —
  * без второго не проверить заранее, хватит ли места под архив.
@@ -76,6 +79,7 @@ export interface BackupPolicy {
 export interface AppConfig {
   version: number
   machineName: string
+  theme: ThemeMode
   cloud: {
     provider: CloudProviderId
     clientId: string

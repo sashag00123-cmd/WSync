@@ -23,6 +23,7 @@ function defaults(): AppConfig {
   return {
     version: CONFIG_VERSION,
     machineName: os.hostname() || 'unknown-pc',
+    theme: 'system',
     cloud: {
       provider: 'yandex',
       clientId: BUILD_CLIENT_ID,
@@ -64,6 +65,10 @@ function normalize(raw: unknown): AppConfig {
       typeof input.machineName === 'string' && input.machineName.length > 0
         ? input.machineName
         : base.machineName,
+    theme:
+      input.theme === 'dark' || input.theme === 'light' || input.theme === 'system'
+        ? input.theme
+        : 'system',
     cloud: {
       provider: 'yandex',
       // Пустое значение в сохранённом конфиге — повод взять вшитое в сборку:

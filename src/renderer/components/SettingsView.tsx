@@ -9,7 +9,8 @@ import {
   type DetectedInstance,
   type InstanceConfig,
   type Quota,
-  type SpeedTestResult
+  type SpeedTestResult,
+  type ThemeMode
 } from '@shared/types'
 
 import { formatBytes } from '../lib/format'
@@ -425,12 +426,31 @@ export function SettingsView(props: SettingsViewProps): React.JSX.Element {
       <section className="card">
         <div className="card-head">
           <span className="hicon">
-            <Icon name="clock" size={18} />
+            <Icon name="settings" size={18} />
           </span>
-          <h2>Бэкапы и эта машина</h2>
+          <h2>Приложение и бэкапы</h2>
         </div>
         <div className="card-body">
           <div className="fields">
+            <div className="label">Оформление</div>
+            <div className="segmented" role="group">
+              {(
+                [
+                  ['system', 'Как в системе'],
+                  ['dark', 'Тёмная'],
+                  ['light', 'Светлая']
+                ] as Array<[ThemeMode, string]>
+              ).map(([mode, label]) => (
+                <button
+                  key={mode}
+                  aria-pressed={draft.theme === mode}
+                  onClick={() => setDraft((current) => ({ ...current, theme: mode }))}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
             <div className="label">Имя этой машины</div>
             <input
               value={draft.machineName}

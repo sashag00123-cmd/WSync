@@ -14,6 +14,7 @@ import type {
   WorldRow
 } from '@shared/types'
 
+import { AccountBadge } from './components/AccountBadge'
 import { ConfirmDialog } from './components/ConfirmDialog'
 import { BrandMark, Icon } from './components/Icon'
 import { LogPanel } from './components/LogPanel'
@@ -21,7 +22,7 @@ import { ProgressDock } from './components/ProgressDock'
 import { SettingsView } from './components/SettingsView'
 import { Toasts, type Toast } from './components/Toasts'
 import { WorldList } from './components/WorldList'
-import { formatBytes, formatDate, statusView } from './lib/format'
+import { formatDate, statusView } from './lib/format'
 
 const MAX_LOG_ENTRIES = 400
 
@@ -193,6 +194,24 @@ export function App(): React.JSX.Element {
   useEffect(() => {
     void refreshWorlds()
   }, [refreshWorlds])
+
+  /**
+   * Тема выставляется атрибутом на <html>. Режим «как в системе» разрешаем
+   * здесь через matchMedia и слушаем смену — так в CSS остаётся один набор
+   * переопределений вместо дубля под медиазапрос.
+   */
+  useEffect(() => {
+    const mode = config?.theme ?? 'system'
+    const media = window.matchMedia('(prefers-color-scheme: light)')
+    const apply = (): void => {
+      const light = mode === 'light' || (mode === 'system' && media.matches)
+      document.documentElement.dataset['theme'] = light ? 'light' : 'dark'
+    }
+    apply()
+    if (mode !== 'system') return
+    media.addEventListener('change', apply)
+    return () => media.removeEventListener('change', apply)
+  }, [config?.theme])
 
   useEffect(() => {
     if (!authState.authorized) {
@@ -401,7 +420,6 @@ export function App(): React.JSX.Element {
     () => rows.filter((row) => row.status === 'diverged').length,
     [rows]
   )
-  const freeSpace = quota === null ? null : quota.total - quota.used
 
   return (
     <div className="app">
@@ -431,28 +449,7 @@ export function App(): React.JSX.Element {
 
         <span className="grow" />
 
-        <div className={`account${authState.authorized ? '' : ' off'}`}>
-          <Icon name={authState.authorized ? 'cloud' : 'cloudOff'} size={18} />
-          <div className="who">
-            <b>
-              {authState.authorized
-                ? (authState.login ?? 'Яндекс.Диск')
-                : authState.needsClientId
-                  ? 'Нужен client_id'
-                  : 'Не подключено'}
-            </b>
-            {freeSpace !== null && quota !== null ? (
-              <>
-                <span className="num">{formatBytes(freeSpace)} свободно</span>
-                <div className={`quota${freeSpace / quota.total < 0.1 ? ' tight' : ''}`}>
-                  <i style={{ width: `${Math.min(100, (quota.used / quota.total) * 100)}%` }} />
-                </div>
-              </>
-            ) : (
-              <span>{authState.authorized ? 'сведения о диске недоступны' : 'нет подключения'}</span>
-            )}
-          </div>
-        </div>
+        <AccountBadge authState={authState} quota={quota} />
 
         {view === 'worlds' ? (
           <>
