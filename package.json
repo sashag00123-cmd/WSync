@@ -17,10 +17,10 @@
     "bench:upload": "esbuild tools/bench-upload.ts --bundle --platform=node --format=cjs --target=node22 --external:electron --outfile=out/bench-upload.cjs && node out/bench-upload.cjs",
     "bench:transports": "esbuild tools/bench-upload-electron.ts --bundle --platform=node --format=cjs --target=node22 --external:electron --outfile=out/bench-electron.cjs && electron out/bench-electron.cjs",
     "icon": "electron tools/make-icon.cjs",
-    "dist:win:portable": "npm run build && electron-builder --win --dir",
+    "dist:win:portable": "npm run build && electron-builder --win --dir --publish never",
     "start": "electron-vite preview",
-    "dist:win": "npm run build && electron-builder --win",
-    "dist:mac": "npm run build && electron-builder --mac"
+    "dist:win": "npm run build && electron-builder --win --publish never",
+    "dist:mac": "npm run build && electron-builder --mac --publish never"
   },
   "dependencies": {
     "archiver": "^7.0.1",

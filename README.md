@@ -98,7 +98,17 @@ npm install && npm run dist:mac
 
 ### Сборка через GitHub Actions
 
-Workflow лежит в `.github/workflows/build.yml` и собирает обе платформы: Windows на `windows-latest`, macOS на `macos-latest`. Запускается вручную из вкладки **Actions → build → Run workflow** либо автоматически по тегу вида `v0.1.0`. Перед сборкой прогоняются `typecheck` и `smoke`, готовые файлы забираются из артефактов задания.
+Workflow лежит в `.github/workflows/build.yml` и собирает обе платформы: Windows на `windows-latest`, macOS на `macos-latest`. Перед сборкой прогоняются `typecheck` и `smoke`.
+
+Запуск вручную — **Actions → build → Run workflow**; готовые файлы лежат в артефактах задания (90 дней, нужен вход в GitHub).
+
+Запуск по тегу дополнительно создаёт релиз с установщиками, которые доступны по прямой ссылке:
+
+```bash
+git tag v0.1.0 && git push origin v0.1.0
+```
+
+Публикация из electron-builder отключена флагом `--publish never`. Без него сборщик определяет CI и сам пытается выложить релиз, падая на отсутствии `GH_TOKEN`; релиз собирается отдельным заданием через `gh`, которому хватает встроенного `GITHUB_TOKEN`.
 
 ### Ключи приложения в сборке
 
